@@ -46,13 +46,24 @@ static NSString *reuseIdentifier = @"CityForecastCellView";
     for (NSInteger i = 0; i < citiesToLoad.count; i++) {
         [self prepareTask:[NSIndexPath indexPathForRow:i inSection:0]];
     }
+
+    self.refreshControl = [[UIRefreshControl alloc] init];
+    [self.refreshControl setTintColor:[UIColor whiteColor]];
+    [self.refreshControl addTarget:self action:@selector(refreshData) forControlEvents:UIControlEventValueChanged];
 }
 
-- (void) viewWillAppear:(BOOL)animated {
+- (void)refreshData {
+    [citiesLoaded removeAllObjects];
+    for (NSInteger i = 0; i < citiesToLoad.count; i++) {
+        [self prepareTask:[NSIndexPath indexPathForRow:i inSection:0]];
+    }
+}
+
+- (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 }
 
-- (NSString*) prepareURL:(NSDictionary *)params {
+- (NSString*)prepareURL:(NSDictionary *)params {
     NSString *url = @"";
 
     NSCharacterSet *expectedCharacterSet = [NSCharacterSet URLQueryAllowedCharacterSet];
@@ -76,13 +87,13 @@ static NSString *reuseIdentifier = @"CityForecastCellView";
     return [url stringByAddingPercentEncodingWithAllowedCharacters:expectedCharacterSet];
 }
 
-- (void) parseData:(NSData*) data {
+- (void)parseData:(NSData*) data {
 
     //NSLog(@"object:%@", object);
 
 }
 
-- (void) prepareTask:(NSIndexPath *)indexPath {
+- (void)prepareTask:(NSIndexPath *)indexPath {
     NSURLSessionDataTask *dataTask;
     
     NSString *city = [citiesToLoad objectAtIndex:indexPath.row];
@@ -116,8 +127,13 @@ static NSString *reuseIdentifier = @"CityForecastCellView";
                             } else if (response && [(NSHTTPURLResponse*)response statusCode] == 200) {
                                 NSError *error;
                                 id object = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-                                [citiesLoaded setValue:object forKey:city];
                                 if (!error) {
+                                    [citiesLoaded setValue:object forKey:city];
+                                    if (citiesLoaded.count == citiesToLoad.count) {
+                                        if (self.refreshControl.refreshing) {
+                                            [self.refreshControl endRefreshing];
+                                        }
+                                    }
                                     dispatch_async(dispatch_get_main_queue(), ^{
                                         [self.tableView beginUpdates];
                                         [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];

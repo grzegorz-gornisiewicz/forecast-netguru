@@ -55,7 +55,7 @@ const NSString *imagesBaseUrl = @"http://openweathermap.org/img/w/";
     return self;
 }
 
-- (void) updateCell:(NSDictionary*) jsonObject {
+- (void)updateCell:(NSDictionary*) jsonObject {
     if (jsonObject) {
         [_indicator stopAnimating];
 
@@ -166,6 +166,5 @@ const NSString *imagesBaseUrl = @"http://openweathermap.org/img/w/";
         [_indicator startAnimating];
     }
 }
-
 
 @end
